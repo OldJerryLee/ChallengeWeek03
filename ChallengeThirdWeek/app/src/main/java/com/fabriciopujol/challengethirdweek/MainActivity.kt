@@ -21,6 +21,7 @@ import kotlinx.android.synthetic.main.activity_main.*
 
 private const val TAG = "MainActivity"
 private const val REQUEST_CODE = 111
+private const val FILENAME = "UserMaps.data"
 const val EXTRA_USER_MAP = "EXTRA_USER_MAP"
 const val EXTRA_MAP_TITLE = "EXTRA_MAP_TITLE"
 
@@ -33,7 +34,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        userMaps = generateSampleData().toMutableList()
+
+        userMaps = deserializeUserMaps(this).toMutableList()
         //Set layout Manager On The Recycler View
         rvMaps.layoutManager = LinearLayoutManager(this)
         //Set Adapter On Recycler View
@@ -44,6 +46,7 @@ class MainActivity : AppCompatActivity() {
                 val intent = Intent(this@MainActivity, DisplayMapActivity::class.java)
                 intent.putExtra(EXTRA_USER_MAP, userMaps[position])
                 startActivity(intent)
+                overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right)
             }
         })
         rvMaps.adapter = mapAdapter
@@ -59,8 +62,30 @@ class MainActivity : AppCompatActivity() {
             val userMap = data?.getSerializableExtra(EXTRA_USER_MAP) as UserMap
             userMaps.add(userMap)
             mapAdapter.notifyItemInserted(userMaps.size - 1)
+            serializeUserMaps(this, userMaps)
         }
         super.onActivityResult(requestCode, resultCode, data)
+    }
+
+    private fun serializeUserMaps(context: Context, userMaps: List<UserMap>) {
+        Log.i(TAG, "serializeUserMaps")
+        ObjectOutputStream(FileOutputStream(getDataFile(context))).use { it.writeObject(userMaps) }
+    }
+
+    private fun deserializeUserMaps(context: Context) : List<UserMap> {
+        Log.i(TAG, "deserializeUserMaps")
+        val dataFile = getDataFile(context)
+        if (!dataFile.exists()) {
+            Log.i(TAG, "Arquivo ainda não existe")
+            return emptyList()
+        }
+        ObjectInputStream(FileInputStream(dataFile)).use { return it.readObject() as List<UserMap> }
+    }
+
+
+    private fun getDataFile(context: Context) : File {
+        Log.i(TAG, "Pegando arquivo do diretório ${context.filesDir}")
+        return File(context.filesDir, FILENAME)
     }
 
     private fun showAlertDialog(){
