@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">ChallengeThirdWeek</string>
+    <string name="title_activity_display_map">Map</string>
+    <string name="title_activity_create_maps">Map</string>
 </resources>

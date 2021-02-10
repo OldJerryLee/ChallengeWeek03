@@ -1,31 +1,90 @@
 package com.fabriciopujol.challengethirdweek
 
+import android.app.Activity
 import android.content.Context
+import android.content.DialogInterface
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
+import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.fabriciopujol.challengethirdweek.models.Place
 import com.fabriciopujol.challengethirdweek.models.UserMap
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
 import kotlinx.android.synthetic.main.activity_main.*
 
 private const val TAG = "MainActivity"
+private const val REQUEST_CODE = 111
+const val EXTRA_USER_MAP = "EXTRA_USER_MAP"
+const val EXTRA_MAP_TITLE = "EXTRA_MAP_TITLE"
+
 class MainActivity : AppCompatActivity() {
+
+    private lateinit var userMaps: MutableList<UserMap>
+    private lateinit var mapAdapter: MapsAdapter
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val userMaps = generateSampleData()
+        userMaps = generateSampleData().toMutableList()
         //Set layout Manager On The Recycler View
         rvMaps.layoutManager = LinearLayoutManager(this)
         //Set Adapter On Recycler View
-        rvMaps.adapter = MapsAdapter(this, userMaps, object: MapsAdapter.OnClickListener{
+        mapAdapter = MapsAdapter(this, userMaps, object: MapsAdapter.OnClickListener{
             override fun onItemClick(position: Int) {
                 Log.i(TAG, "OnItemClick $position")
-                // When the user taps on view in RV, navigate to the new Acvitity 
+                // When the user taps on view in RV, navigate to the new Acvitity
+                val intent = Intent(this@MainActivity, DisplayMapActivity::class.java)
+                intent.putExtra(EXTRA_USER_MAP, userMaps[position])
+                startActivity(intent)
             }
         })
+        rvMaps.adapter = mapAdapter
+
+        fabCreateMap.setOnClickListener{
+            showAlertDialog()
+        }
+
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if(requestCode == REQUEST_CODE && resultCode == Activity.RESULT_OK){
+            val userMap = data?.getSerializableExtra(EXTRA_USER_MAP) as UserMap
+            userMaps.add(userMap)
+            mapAdapter.notifyItemInserted(userMaps.size - 1)
+        }
+        super.onActivityResult(requestCode, resultCode, data)
+    }
+
+    private fun showAlertDialog(){
+        val mapFormView = LayoutInflater.from(this).inflate(R.layout.dialog_create_map,null)
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Criar um titulo")
+            .setView(mapFormView)
+            .setNegativeButton("Cancelar",null)
+            .setPositiveButton("OK",null).show()
+
+        dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener{
+            val title = mapFormView.findViewById<EditText>(R.id.editTitulo).text.toString()
+            if(title.trim().isEmpty()){
+                Toast.makeText(this, "Por favor insira um titulo pro mapa", Toast.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
+
+            val intent = Intent(this@MainActivity, CreateMapsActivity::class.java)
+            intent.putExtra(EXTRA_MAP_TITLE, title)
+            startActivityForResult(intent, REQUEST_CODE)
+
+            dialog.dismiss()
+        }
+
     }
 
     private fun generateSampleData(): List<UserMap> {
