@@ -18,6 +18,7 @@ import com.fabriciopujol.challengethirdweek.models.UserMap
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import kotlinx.android.synthetic.main.activity_main.*
+import java.io.*
 
 private const val TAG = "MainActivity"
 private const val REQUEST_CODE = 111
@@ -46,7 +47,7 @@ class MainActivity : AppCompatActivity() {
                 val intent = Intent(this@MainActivity, DisplayMapActivity::class.java)
                 intent.putExtra(EXTRA_USER_MAP, userMaps[position])
                 startActivity(intent)
-                overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right)
+                overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
             }
         })
         rvMaps.adapter = mapAdapter
